@@ -99,7 +99,7 @@
         <h3>{{ holdings|length }} Holdings</h3>
     </div>
     <div class="table-wrapper">
-        <table>
+        <table class="table-responsive">
             <thead>
                 <tr>
                     <th>Symbol</th>
@@ -120,18 +120,18 @@
                 {% set gain = (h.current_price - h.buy_price) * h.quantity %}
                 {% set gain_pct = ((h.current_price - h.buy_price) / h.buy_price * 100) if h.buy_price > 0 else 0 %}
                 <tr>
-                    <td><strong>{{ h.symbol }}</strong></td>
-                    <td>{{ h.name }}</td>
-                    <td><span class="badge badge-category">{{ h.type|replace('_', ' ')|title }}</span></td>
-                    <td class="text-right">{{ h.quantity }}</td>
-                    <td class="text-right text-muted">${{ "%.2f"|format(h.buy_price) }}</td>
-                    <td class="text-right amount">${{ "%.2f"|format(h.current_price) }}</td>
-                    <td class="text-right amount">${{ "%.2f"|format(value) }}</td>
-                    <td class="text-right amount {{ 'positive' if gain >= 0 else 'negative' }}">
+                    <td data-label="Symbol"><strong>{{ h.symbol }}</strong></td>
+                    <td data-label="Name">{{ h.name }}</td>
+                    <td data-label="Type"><span class="badge badge-category">{{ h.type|replace('_', ' ')|title }}</span></td>
+                    <td data-label="Qty" class="text-right">{{ h.quantity }}</td>
+                    <td data-label="Buy Price" class="text-right text-muted">${{ "%.2f"|format(h.buy_price) }}</td>
+                    <td data-label="Current" class="text-right amount">${{ "%.2f"|format(h.current_price) }}</td>
+                    <td data-label="Value" class="text-right amount">${{ "%.2f"|format(value) }}</td>
+                    <td data-label="Gain/Loss" class="text-right amount {{ 'positive' if gain >= 0 else 'negative' }}">
                         {{ '+' if gain >= 0 else '' }}${{ "%.2f"|format(gain) }}
-                        <br><small>({{ "%.1f"|format(gain_pct) }}%)</small>
+                        <small>({{ "%.1f"|format(gain_pct) }}%)</small>
                     </td>
-                    <td>
+                    <td data-label="Update">
                         <form method="post" action="/investments/update/{{ h.id }}" class="inline-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="number" name="current_price" step="0.01" value="{{ h.current_price }}"
@@ -139,7 +139,7 @@
                             <button type="submit" class="btn btn-outline btn-sm">Set</button>
                         </form>
                     </td>
-                    <td>
+                    <td class="td-actions">
                         <form method="post" action="/investments/delete/{{ h.id }}" style="display:inline"
                               onsubmit="return confirm('Delete {{ h.symbol }}?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

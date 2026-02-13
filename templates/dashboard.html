@@ -103,22 +103,22 @@
     </div>
     {% if recent %}
     <div class="table-wrapper">
-        <table>
+        <table class="table-responsive">
             <thead>
                 <tr><th>Date</th><th>Description</th><th>Category</th><th class="text-right">Amount</th></tr>
             </thead>
             <tbody>
                 {% for t in recent %}
                 <tr>
-                    <td class="text-muted">{{ t.date.strftime('%b %d') }}</td>
-                    <td>{{ t.description or '—' }}</td>
-                    <td>
+                    <td data-label="Date" class="text-muted">{{ t.date.strftime('%b %d') }}</td>
+                    <td data-label="Description">{{ t.description or '—' }}</td>
+                    <td data-label="Category">
                         <span class="badge badge-category"
                               style="background:{{ category_bg_colors.get(t.category, '#f8fafc') }};color:{{ category_colors.get(t.category, '#64748b') }}">
                             {{ t.category }}
                         </span>
                     </td>
-                    <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
+                    <td data-label="Amount" class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
                         {{ '+' if t.type == 'income' else '-' }}{{ t.amount|money(t.currency) }}
                     </td>
                 </tr>

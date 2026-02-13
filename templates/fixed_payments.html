@@ -70,7 +70,7 @@
         <h3>{{ payments|length }} Fixed Payments</h3>
     </div>
     <div class="table-wrapper">
-        <table>
+        <table class="table-responsive">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -92,17 +92,17 @@
                     {% set monthly = p.amount %}
                 {% endif %}
                 <tr class="{{ 'inactive' if not p.is_active }}">
-                    <td><strong>{{ p.name }}</strong></td>
-                    <td>
+                    <td data-label="Name"><strong>{{ p.name }}</strong></td>
+                    <td data-label="Category">
                         <span class="badge badge-category"
                               style="background:{{ category_bg_colors.get(p.category, '#f8fafc') }};color:{{ category_colors.get(p.category, '#64748b') }}">
                             {{ p.category }}
                         </span>
                     </td>
-                    <td>{{ p.frequency|title }}{% if p.day_of_month %} (day {{ p.day_of_month }}){% endif %}</td>
-                    <td class="text-right amount">{{ p.amount|money(p.currency) }}</td>
-                    <td class="text-right text-muted">${{ "%.2f"|format(monthly) }}/mo</td>
-                    <td>
+                    <td data-label="Frequency">{{ p.frequency|title }}{% if p.day_of_month %} (day {{ p.day_of_month }}){% endif %}</td>
+                    <td data-label="Amount" class="text-right amount">{{ p.amount|money(p.currency) }}</td>
+                    <td data-label="Monthly" class="text-right text-muted">${{ "%.2f"|format(monthly) }}/mo</td>
+                    <td data-label="Status">
                         <form method="post" action="/fixed-payments/toggle/{{ p.id }}" style="display:inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-ghost btn-sm">
@@ -110,7 +110,7 @@
                             </button>
                         </form>
                     </td>
-                    <td>
+                    <td class="td-actions">
                         <form method="post" action="/fixed-payments/delete/{{ p.id }}" style="display:inline"
                               onsubmit="return confirm('Delete this payment?')">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

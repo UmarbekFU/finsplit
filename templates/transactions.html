@@ -109,7 +109,7 @@
     </div>
     {% if transactions %}
     <div class="table-wrapper">
-        <table>
+        <table class="table-responsive">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -123,19 +123,19 @@
             <tbody>
                 {% for t in transactions %}
                 <tr>
-                    <td class="text-muted">{{ t.date.strftime('%Y-%m-%d') }}</td>
-                    <td><span class="badge badge-{{ t.type }}">{{ t.type }}</span></td>
-                    <td>
+                    <td data-label="Date" class="text-muted">{{ t.date.strftime('%Y-%m-%d') }}</td>
+                    <td data-label="Type"><span class="badge badge-{{ t.type }}">{{ t.type }}</span></td>
+                    <td data-label="Category">
                         <span class="badge badge-category"
                               style="background:{{ category_bg_colors.get(t.category, '#f8fafc') }};color:{{ category_colors.get(t.category, '#64748b') }}">
                             {{ t.category }}
                         </span>
                     </td>
-                    <td>{{ t.description or '—' }}</td>
-                    <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
+                    <td data-label="Description">{{ t.description or '—' }}</td>
+                    <td data-label="Amount" class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
                         {{ t.amount|money(t.currency) }}
                     </td>
-                    <td class="nowrap">
+                    <td class="td-actions">
                         <a href="/transactions/edit/{{ t.id }}" class="btn btn-ghost btn-sm" title="Edit">
                             <i data-lucide="pencil"></i>
                         </a>

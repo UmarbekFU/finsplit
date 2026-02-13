@@ -81,18 +81,18 @@
 <div class="card">
     <div class="card-header"><h3>Unbudgeted Spending</h3></div>
     <div class="table-wrapper">
-        <table>
+        <table class="table-responsive">
             <thead><tr><th>Category</th><th class="text-right">Spent</th></tr></thead>
             <tbody>
                 {% for cat, amt in unbudgeted.items() %}
                 <tr>
-                    <td>
+                    <td data-label="Category">
                         <span class="badge badge-category"
                               style="background:{{ category_bg_colors.get(cat, '#f8fafc') }};color:{{ category_colors.get(cat, '#64748b') }}">
                             {{ cat }}
                         </span>
                     </td>
-                    <td class="text-right amount negative">${{ "%.2f"|format(amt) }}</td>
+                    <td data-label="Spent" class="text-right amount negative">${{ "%.2f"|format(amt) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

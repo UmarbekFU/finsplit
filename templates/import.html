@@ -45,7 +45,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="count" value="{{ transactions|length }}">
         <div class="table-wrapper">
-            <table>
+            <table class="table-responsive">
                 <thead>
                     <tr>
                         <th></th>
@@ -60,31 +60,31 @@
                 <tbody>
                     {% for t in transactions %}
                     <tr>
-                        <td>
+                        <td data-label="Include" class="td-checkbox">
                             <input type="checkbox" name="select_{{ loop.index0 }}" value="1" checked class="check-input">
                         </td>
-                        <td>
+                        <td data-label="Date">
                             <input type="date" name="date_{{ loop.index0 }}" value="{{ t.date or '' }}" class="input-sm">
                         </td>
-                        <td>
+                        <td data-label="Description">
                             <input type="text" name="desc_{{ loop.index0 }}" value="{{ t.description or '' }}">
                         </td>
-                        <td>
+                        <td data-label="Type">
                             <select name="type_{{ loop.index0 }}">
                                 <option value="expense" {{ 'selected' if t.type == 'expense' }}>Expense</option>
                                 <option value="income" {{ 'selected' if t.type == 'income' }}>Income</option>
                             </select>
                         </td>
-                        <td>
+                        <td data-label="Amount">
                             <input type="number" name="amount_{{ loop.index0 }}" value="{{ t.amount }}" step="0.01" class="input-sm">
                         </td>
-                        <td>
+                        <td data-label="Currency">
                             <select name="currency_{{ loop.index0 }}">
                                 <option value="UZS" {{ 'selected' if t.get('currency', 'UZS') == 'UZS' }}>UZS</option>
                                 <option value="USD" {{ 'selected' if t.get('currency', 'UZS') == 'USD' }}>USD</option>
                             </select>
                         </td>
-                        <td>
+                        <td data-label="Category">
                             <select name="category_{{ loop.index0 }}">
                                 {% for c in categories %}
                                 <option value="{{ c }}" {{ 'selected' if c == t.category }}>{{ c }}</option>
