@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title_extra %} — Fixed Payments{% endblock %}
+{% block page_title %}Fixed Payments{% endblock %}
+{% block page_actions %}
+<span class="amount header-stat">${{ "%.0f"|format(monthly_total) }}/mo</span>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2 section">
+    <div class="stat-card">
+        <div class="stat-label">Monthly Commitments</div>
+        <div class="stat-value">${{ "%.2f"|format(monthly_total) }}</div>
+        <div class="stat-footer">{{ payments|selectattr('is_active')|list|length }} active payments</div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>Add Fixed Payment</h3></div>
+        <div class="card-body">
+            <form method="post" action="/fixed-payments/add">
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name" placeholder="Rent, Netflix, Gym..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="number" name="amount" step="0.01" min="0.01" placeholder="500.00" required>
+                    </div>
+                </div>
+                <div class="form-row cols-3">
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select name="frequency">
+                            {% for f in frequencies %}
+                            <option value="{{ f }}">{{ f|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category">
+                            {% for c in categories %}
+                            <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Day of Month</label>
+                        <input type="number" name="day_of_month" min="1" max="31" placeholder="1">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Add Payment</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if payments %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ payments|length }} Fixed Payments</h3>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Frequency</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-right">Monthly Equiv.</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                {% if p.frequency == 'weekly' %}
+                    {% set monthly = p.amount * 52 / 12 %}
+                {% elif p.frequency == 'yearly' %}
+                    {% set monthly = p.amount / 12 %}
+                {% else %}
+                    {% set monthly = p.amount %}
+                {% endif %}
+                <tr class="{{ 'inactive' if not p.is_active }}">
+                    <td><strong>{{ p.name }}</strong></td>
+                    <td><span class="badge badge-category">{{ p.category }}</span></td>
+                    <td>{{ p.frequency|title }}{% if p.day_of_month %} (day {{ p.day_of_month }}){% endif %}</td>
+                    <td class="text-right amount">${{ "%.2f"|format(p.amount) }}</td>
+                    <td class="text-right text-muted">${{ "%.2f"|format(monthly) }}/mo</td>
+                    <td>
+                        <a href="/fixed-payments/toggle/{{ p.id }}" class="btn btn-ghost btn-sm">
+                            {{ 'Active' if p.is_active else 'Paused' }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/fixed-payments/delete/{{ p.id }}" class="delete-btn" title="Delete"
+                           onclick="return confirm('Delete this payment?')"><i data-lucide="x"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>No fixed payments yet</p>
+        <span class="text-muted">Add your rent, subscriptions, and recurring bills</span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

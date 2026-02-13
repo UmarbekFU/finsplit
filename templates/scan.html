@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title_extra %} — Scan Receipt{% endblock %}
+{% block page_title %}Scan Receipt{% endblock %}
+
+{% block content %}
+{% if not parsed %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <label class="upload-area" for="receipt-file">
+                <i data-lucide="camera" class="icon-lg"></i>
+                <p class="font-semibold">Upload a receipt photo</p>
+                <span class="text-muted">JPG, PNG, or HEIC</span>
+                <input type="file" name="receipt" id="receipt-file" accept="image/*"
+                       onchange="this.form.submit()">
+            </label>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="card section">
+    <div class="card-header"><h3>Confirm Receipt</h3></div>
+    <div class="card-body">
+        <form method="post" action="/scan/confirm">
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="type">
+                        <option value="expense" selected>Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" name="amount" step="0.01" value="{{ parsed.amount }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select name="currency">
+                        <option value="UZS" selected>UZS</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        {% for c in categories %}
+                        <option value="{{ c }}" {{ 'selected' if c == parsed.category }}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" name="description" value="{{ parsed.store or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="date" value="{{ parsed.date or '' }}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save Transaction</button>
+        </form>
+    </div>
+</div>
+
+{% if parsed.raw_text %}
+<div class="card">
+    <details>
+        <summary class="filter-summary">Raw OCR Text</summary>
+        <div class="filter-body">
+            <pre>{{ parsed.raw_text }}</pre>
+        </div>
+    </details>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSplit{% block title_extra %}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <h1>FinSplit</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a>
+
+                <div class="nav-section">Money</div>
+                <a href="/transactions" {% if '/transactions' in request.path %}class="active"{% endif %}>Transactions</a>
+                <a href="/budgets" {% if '/budgets' in request.path %}class="active"{% endif %}>Budgets</a>
+                <a href="/fixed-payments" {% if '/fixed-payments' in request.path %}class="active"{% endif %}>Fixed Payments</a>
+                <a href="/investments" {% if '/investments' in request.path %}class="active"{% endif %}>Investments</a>
+
+                <div class="nav-section">Plan</div>
+                <a href="/trips" {% if '/trips' in request.path %}class="active"{% endif %}>Trips</a>
+
+                <div class="nav-section">Tools</div>
+                <a href="/scan" {% if '/scan' in request.path %}class="active"{% endif %}>Scan Receipt</a>
+                <a href="/import" {% if '/import' in request.path %}class="active"{% endif %}>Import</a>
+                <a href="/split" {% if '/split' in request.path %}class="active"{% endif %}>Split</a>
+            </nav>
+        </aside>
+
+        <div class="main-content">
+            <header class="page-header">
+                <div class="page-header-left">
+                    <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1>{% block page_title %}FinSplit{% endblock %}</h1>
+                </div>
+                <div class="page-header-actions">
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </header>
+
+            <div class="page-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+
+            <div class="page-footer">FinSplit</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>lucide.createIcons();</script>
+    {% block scripts %}{% endblock %}
+    <script>
+    (function() {
+        var tg = window.Telegram && window.Telegram.WebApp;
+        if (!tg || !tg.initData) return;
+        document.body.classList.add('tg-mode');
+        tg.expand();
+        tg.ready();
+        if (tg.themeParams.bg_color) document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color);
+        if (tg.themeParams.text_color) document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color);
+        if (tg.themeParams.button_color) document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color);
+        tg.BackButton.onClick(function() { window.history.back(); });
+        if (window.location.pathname !== '/') tg.BackButton.show();
+    })();
+    </script>
+</body>
+</html>

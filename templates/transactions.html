@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title_extra %} — Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+{% block page_actions %}
+<span class="amount header-stat {{ 'positive' if total >= 0 else 'negative' }}">
+    Net: {{ '+' if total >= 0 else '' }}${{ "%.2f"|format(total) }}
+</span>
+{% endblock %}
+
+{% block content %}
+<div class="card section">
+    <div class="card-header"><h3>Add Transaction</h3></div>
+    <div class="card-body">
+        <form method="post" action="/transactions/add">
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="type" id="txn-type" onchange="updateCategories()">
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select name="currency">
+                        <option value="USD">$ USD</option>
+                        <option value="UZS">UZS</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" id="txn-category">
+                        {% for c in expense_categories %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" name="description" placeholder="What was this for?">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="date">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Add</button>
+        </form>
+    </div>
+</div>
+
+<div class="card section">
+    <details>
+        <summary class="filter-summary">Filter Transactions</summary>
+        <div class="filter-body">
+            <form method="get" class="form-row cols-3">
+                <div class="form-group">
+                    <select name="type">
+                        <option value="">All Types</option>
+                        <option value="income" {{ 'selected' if type_filter == 'income' }}>Income</option>
+                        <option value="expense" {{ 'selected' if type_filter == 'expense' }}>Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select name="category">
+                        <option value="">All Categories</option>
+                        {% for c in expense_categories + income_categories %}
+                        <option value="{{ c }}" {{ 'selected' if cat_filter == c }}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-outline btn-full">Apply</button>
+                </div>
+            </form>
+        </div>
+    </details>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>{{ transactions|length }} transactions</h3>
+    </div>
+    {% if transactions %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="text-right">Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="text-muted">{{ t.date.strftime('%Y-%m-%d') }}</td>
+                    <td><span class="badge badge-{{ t.type }}">{{ t.type }}</span></td>
+                    <td><span class="badge badge-category">{{ t.category }}</span></td>
+                    <td>{{ t.description or '—' }}</td>
+                    <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
+                        {{ t.amount|money(t.currency) }}
+                    </td>
+                    <td class="nowrap">
+                        <a href="/transactions/edit/{{ t.id }}" class="btn btn-ghost btn-sm" title="Edit">
+                            <i data-lucide="pencil"></i>
+                        </a>
+                        <a href="/transactions/delete/{{ t.id }}" class="delete-btn" title="Delete"
+                           onclick="return confirm('Delete this transaction?')"><i data-lucide="x"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No transactions found</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var expenseCats = {{ expense_categories|tojson }};
+var incomeCats = {{ income_categories|tojson }};
+function updateCategories() {
+    var type = document.getElementById('txn-type').value;
+    var sel = document.getElementById('txn-category');
+    var cats = type === 'income' ? incomeCats : expenseCats;
+    sel.innerHTML = cats.map(function(c) { return '<option value="'+c+'">'+c+'</option>'; }).join('');
+}
+</script>
+<script>lucide.createIcons();</script>
+{% endblock %}

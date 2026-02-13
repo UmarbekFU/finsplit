@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title_extra %} — Trips{% endblock %}
+{% block page_title %}Trip Planner{% endblock %}
+
+{% block content %}
+<div class="card section">
+    <div class="card-header"><h3>Plan a Trip</h3></div>
+    <div class="card-body">
+        <form method="post" action="/trips/add">
+            <div class="form-row cols-2">
+                <div class="form-group">
+                    <label>Trip Name</label>
+                    <input type="text" name="name" placeholder="Bali, Istanbul..." required>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Cost</label>
+                    <input type="number" name="estimated_cost" step="0.01" min="1" placeholder="2000" required>
+                </div>
+            </div>
+            <div class="form-row cols-2">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" name="end_date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" name="notes" placeholder="Flights, hotels, activities...">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Check Affordability</button>
+        </form>
+    </div>
+</div>
+
+{% if trips %}
+<div class="budget-grid">
+    {% for td in trips %}
+    {% set t = td.trip %}
+    {% set v = td.verdict %}
+    <div class="budget-card {{ 'over' if v == 'over' }}">
+        <div class="budget-card-header">
+            <h4>{{ t.name }}</h4>
+            <a href="/trips/delete/{{ t.id }}" class="delete-btn" title="Delete"
+               onclick="return confirm('Delete this trip?')"><i data-lucide="x"></i></a>
+        </div>
+
+        <div class="budget-amounts">
+            <span class="amount">${{ "%.0f"|format(t.estimated_cost) }}</span>
+            <span class="text-muted">estimated</span>
+        </div>
+
+        {% if v == 'past' %}
+        <div class="budget-footer text-muted">This trip has passed</div>
+        {% elif v == 'today' %}
+        <div class="budget-footer font-semibold">Trip is today!</div>
+        {% else %}
+        <div class="trip-meta">
+            <strong>{{ td.days_until }}</strong> days away
+            &middot; {{ t.start_date.strftime('%b %d') }}{% if t.end_date %} — {{ t.end_date.strftime('%b %d') }}{% endif %}
+        </div>
+
+        <div class="trip-saving">
+            Save ${{ "%.0f"|format(td.daily_saving_needed) }}/day to afford
+        </div>
+
+        <div class="progress-bar">
+            {% set pct = (td.projected_savings / t.estimated_cost * 100) if t.estimated_cost > 0 else 0 %}
+            <div class="progress-fill {{ 'over' if v == 'over' else ('warn' if v == 'tight' else '') }}"
+                 style="width:{{ [pct, 100]|min }}%"></div>
+        </div>
+        <div class="trip-footer">
+            <span class="text-muted">Projected: ${{ "%.0f"|format(td.projected_savings) }}</span>
+            <span class="trip-verdict {{ 'positive' if v == 'comfortable' else ('negative' if v == 'over' else '') }}">
+                {% if v == 'comfortable' %}Affordable
+                {% elif v == 'tight' %}Tight
+                {% else %}Can't afford yet
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+
+        {% if t.notes %}
+        <div class="budget-footer">{{ t.notes }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>Where to next?</p>
+        <span class="text-muted">Add a trip to see if you can afford it</span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

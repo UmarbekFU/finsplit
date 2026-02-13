@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title_extra %} — Investments{% endblock %}
+{% block page_title %}Investments{% endblock %}
+{% block page_actions %}
+<span class="amount header-stat">
+    Portfolio: ${{ "%.2f"|format(total_value) }}
+</span>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Value</div>
+        <div class="stat-value">${{ "%.2f"|format(total_value) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Cost</div>
+        <div class="stat-value">${{ "%.2f"|format(total_cost) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Gain / Loss</div>
+        <div class="stat-value {{ 'positive' if total_gain >= 0 else 'negative' }}">
+            {{ '+' if total_gain >= 0 else '' }}${{ "%.2f"|format(total_gain) }}
+        </div>
+        <div class="stat-footer {{ 'positive' if total_gain >= 0 else 'negative' }}">
+            {{ "%.1f"|format(total_gain_pct) }}% return
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 section">
+    <div class="card">
+        <div class="card-header"><h3>Allocation</h3></div>
+        <div class="card-body chart-container">
+            {% if allocation %}
+            <canvas id="allocationChart" class="chart-canvas"></canvas>
+            {% else %}
+            <span class="text-muted">Add investments to see allocation</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Add Investment</h3></div>
+        <div class="card-body">
+            <form method="post" action="/investments/add">
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Symbol</label>
+                        <input type="text" name="symbol" placeholder="AAPL" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name" placeholder="Apple Inc." required>
+                    </div>
+                </div>
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select name="type" required>
+                            {% for t in investment_types %}
+                            <option value="{{ t }}">{{ t|replace('_', ' ')|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" name="quantity" step="0.0001" min="0.0001" placeholder="10" required>
+                    </div>
+                </div>
+                <div class="form-row cols-3">
+                    <div class="form-group">
+                        <label>Buy Price</label>
+                        <input type="number" name="buy_price" step="0.01" min="0.01" placeholder="150.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Price</label>
+                        <input type="number" name="current_price" step="0.01" min="0.01" placeholder="175.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Monthly DCA</label>
+                        <input type="number" name="monthly_contribution" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Buy Date</label>
+                    <input type="date" name="buy_date">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Add to Portfolio</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if holdings %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ holdings|length }} Holdings</h3>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Buy Price</th>
+                    <th class="text-right">Current</th>
+                    <th class="text-right">Value</th>
+                    <th class="text-right">Gain/Loss</th>
+                    <th>Update</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in holdings %}
+                {% set value = h.current_price * h.quantity %}
+                {% set gain = (h.current_price - h.buy_price) * h.quantity %}
+                {% set gain_pct = ((h.current_price - h.buy_price) / h.buy_price * 100) if h.buy_price > 0 else 0 %}
+                <tr>
+                    <td><strong>{{ h.symbol }}</strong></td>
+                    <td>{{ h.name }}</td>
+                    <td><span class="badge badge-category">{{ h.type|replace('_', ' ')|title }}</span></td>
+                    <td class="text-right">{{ h.quantity }}</td>
+                    <td class="text-right text-muted">${{ "%.2f"|format(h.buy_price) }}</td>
+                    <td class="text-right amount">${{ "%.2f"|format(h.current_price) }}</td>
+                    <td class="text-right amount">${{ "%.2f"|format(value) }}</td>
+                    <td class="text-right amount {{ 'positive' if gain >= 0 else 'negative' }}">
+                        {{ '+' if gain >= 0 else '' }}${{ "%.2f"|format(gain) }}
+                        <br><small>({{ "%.1f"|format(gain_pct) }}%)</small>
+                    </td>
+                    <td>
+                        <form method="post" action="/investments/update/{{ h.id }}" class="inline-form">
+                            <input type="number" name="current_price" step="0.01" value="{{ h.current_price }}"
+                                class="input-inline">
+                            <button type="submit" class="btn btn-outline btn-sm">Set</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="/investments/delete/{{ h.id }}" class="delete-btn" title="Delete"
+                           onclick="return confirm('Delete {{ h.symbol }}?')"><i data-lucide="x"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>No investments yet</p>
+        <span class="text-muted">Add your first holding above</span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if allocation %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+var ctx = document.getElementById('allocationChart').getContext('2d');
+var data = {{ allocation|tojson }};
+var colors = ['#171717', '#525252', '#a3a3a3', '#d4d4d4', '#1a7f37', '#9a6700', '#cf222e', '#7d7d7d'];
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(data).map(function(k) { return k.replace('_', ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }); }),
+        datasets: [{
+            data: Object.values(data),
+            backgroundColor: colors.slice(0, Object.keys(data).length),
+            borderWidth: 0,
+            hoverOffset: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                        var pct = (ctx.raw / total * 100).toFixed(1);
+                        return ' $' + ctx.raw.toFixed(2) + ' (' + pct + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+<script>lucide.createIcons();</script>
+{% endblock %}

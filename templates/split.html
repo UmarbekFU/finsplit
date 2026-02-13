@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title_extra %} — Split Expenses{% endblock %}
+{% block page_title %}Split Expenses{% endblock %}
+
+{% block content %}
+<div class="split-layout">
+    <!-- Group List -->
+    <div>
+        <div class="card section">
+            <div class="card-header"><h3>Groups</h3></div>
+            <div class="card-body">
+                {% if groups %}
+                <div class="group-list">
+                    {% for g in groups %}
+                    <a href="/split/{{ g.id }}" class="group-link {{ 'active' if active_group and active_group.id == g.id }}">
+                        {{ g.name }}
+                        <small>{{ g.members|length }}m</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>New Group</h3></div>
+            <div class="card-body">
+                <form method="post" action="/split/create_group">
+                    <div class="form-group">
+                        <label>Group Name</label>
+                        <input type="text" name="name" placeholder="Trip, Roommates..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Members (comma-separated)</label>
+                        <input type="text" name="members" placeholder="You, Alice, Bob" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Detail -->
+    <div>
+        {% if active_group %}
+        <div class="card section">
+            <div class="card-header">
+                <h3>{{ active_group.name }}</h3>
+                <form method="post" action="/split/{{ active_group.id }}/delete">
+                    <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete this group?')">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="card-body">
+                <div class="members-list">
+                    {% for m in active_group.members %}
+                    <span class="badge badge-category">{{ m.name }}</span>
+                    {% endfor %}
+                </div>
+
+                <form method="post" action="/split/{{ active_group.id }}/add_member" class="inline-form">
+                    <input type="text" name="name" placeholder="Add member" class="input-inline">
+                    <button type="submit" class="btn btn-outline btn-sm">Add</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Expense -->
+        <div class="card section">
+            <div class="card-header"><h3>Add Expense</h3></div>
+            <div class="card-body">
+                <form method="post" action="/split/{{ active_group.id }}/add_expense">
+                    <div class="form-row cols-3">
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" name="description" placeholder="Dinner, gas..." required>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount</label>
+                            <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Paid By</label>
+                            <select name="paid_by" required>
+                                {% for m in active_group.members %}
+                                <option value="{{ m.id }}">{{ m.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" name="date">
+                        </div>
+                        <div class="form-group">
+                            <label>Split Type</label>
+                            <select name="split_type" id="split-type" onchange="toggleCustom()">
+                                <option value="equal">Equal</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="custom-shares" class="form-group" hidden>
+                        <label>Custom Amounts</label>
+                        <div class="shares-grid">
+                            {% for m in active_group.members %}
+                            <div class="form-group">
+                                <label>{{ m.name }}</label>
+                                <input type="number" name="share_{{ m.id }}" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">Add Expense</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Debts -->
+        {% if debts %}
+        <div class="card section">
+            <div class="card-header"><h3>Who Owes Who</h3></div>
+            <div class="card-body">
+                {% for d in debts %}
+                <div class="debt-card">
+                    <span>{{ d.from }}</span>
+                    <span class="debt-arrow"><i data-lucide="arrow-right"></i></span>
+                    <span>{{ d.to }}</span>
+                    <span class="amount negative">${{ "%.2f"|format(d.amount) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Expense History -->
+        {% if expenses %}
+        <div class="card">
+            <div class="card-header"><h3>Expenses</h3></div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Paid By</th>
+                            <th class="text-right">Amount</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in expenses %}
+                        <tr class="{{ 'settled' if e.settled }}">
+                            <td class="text-muted">{{ e.date.strftime('%b %d') }}</td>
+                            <td>{{ e.description }}</td>
+                            <td>{{ e.payer.name }}</td>
+                            <td class="text-right amount">${{ "%.2f"|format(e.amount) }}</td>
+                            <td>
+                                <a href="/split/{{ active_group.id }}/settle/{{ e.id }}" class="btn btn-ghost btn-sm">
+                                    {{ 'Undo' if e.settled else 'Settle' }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <p>Select a group to get started</p>
+                <span class="text-muted">Or create a new one</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleCustom() {
+    var el = document.getElementById('custom-shares');
+    el.hidden = document.getElementById('split-type').value !== 'custom';
+}
+</script>
+<script>lucide.createIcons();</script>
+{% endblock %}

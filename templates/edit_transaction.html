@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title_extra %} — Edit Transaction{% endblock %}
+{% block page_title %}Edit Transaction{% endblock %}
+
+{% block content %}
+<div class="card card-narrow">
+    <div class="card-header"><h3>Edit Transaction #{{ t.id }}</h3></div>
+    <div class="card-body">
+        <form method="post">
+            <div class="form-row cols-2">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="type" id="edit-type" onchange="updateCategories()">
+                        <option value="expense" {{ 'selected' if t.type == 'expense' }}>Expense</option>
+                        <option value="income" {{ 'selected' if t.type == 'income' }}>Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" id="edit-category"></select>
+                </div>
+            </div>
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" name="amount" step="0.01" min="0.01" value="{{ t.amount }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select name="currency">
+                        <option value="USD" {{ 'selected' if t.currency == 'USD' }}>USD</option>
+                        <option value="UZS" {{ 'selected' if t.currency == 'UZS' }}>UZS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="date" value="{{ t.date.strftime('%Y-%m-%d') }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" value="{{ t.description or '' }}">
+            </div>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary flex-1">Save Changes</button>
+                <a href="/transactions" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var expenseCats = {{ expense_categories|tojson }};
+var incomeCats = {{ income_categories|tojson }};
+var currentCat = {{ t.category|tojson }};
+
+function updateCategories() {
+    var type = document.getElementById('edit-type').value;
+    var sel = document.getElementById('edit-category');
+    var cats = type === 'income' ? incomeCats : expenseCats;
+    sel.innerHTML = cats.map(function(c) {
+        return '<option value="'+c+'" '+(c === currentCat ? 'selected' : '')+'>'+c+'</option>';
+    }).join('');
+}
+updateCategories();
+</script>
+{% endblock %}

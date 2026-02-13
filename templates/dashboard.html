@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title_extra %} — Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_actions %}
+<form method="get">
+    <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()">
+</form>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid-hero">
+    <div class="stat-card stat-card-{{ allowance.status }}">
+        <div class="stat-label">You can spend today</div>
+        <div class="stat-value-hero {{ 'positive' if allowance.status == 'comfortable' else ('negative' if allowance.status == 'over' else '') }}">
+            ${{ "%.2f"|format(allowance.daily_allowance) }}
+        </div>
+        <div class="stat-footer">{{ allowance.days_remaining }} days left this month</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Remaining</div>
+        <div class="stat-value {{ 'positive' if allowance.remaining >= 0 else 'negative' }}">${{ "%.0f"|format(allowance.remaining) }}</div>
+        <div class="stat-footer">${{ "%.0f"|format(income) }} in &minus; ${{ "%.0f"|format(expenses) }} out</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Fixed Commitments</div>
+        <div class="stat-value">${{ "%.0f"|format(allowance.fixed_payments_total + allowance.investment_contributions) }}</div>
+        <div class="stat-footer">Bills + investments/mo</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Portfolio</div>
+        <div class="stat-value">${{ "%.2f"|format(portfolio_value) }}</div>
+        <div class="stat-footer {{ 'positive' if portfolio_gain >= 0 else 'negative' }}">
+            {{ "+" if portfolio_gain >= 0 else "" }}${{ "%.2f"|format(portfolio_gain) }}
+        </div>
+    </div>
+</div>
+
+{% if budget_status %}
+<div class="card section">
+    <div class="card-header">
+        <h3>Budget Status</h3>
+    </div>
+    <div class="card-body">
+        {% for b in budget_status %}
+        <div class="section">
+            <div class="flex-between">
+                <span class="font-semibold">{{ b.category }}</span>
+                <small class="text-muted">${{ "%.0f"|format(b.spent) }} / ${{ "%.0f"|format(b.limit) }}</small>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill {{ 'over' if b.over else ('warn' if b.pct > 75 else '') }}"
+                     style="width:{{ b.pct }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h3>Recent Transactions</h3>
+        <a href="/transactions" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    {% if recent %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Description</th><th>Category</th><th class="text-right">Amount</th></tr>
+            </thead>
+            <tbody>
+                {% for t in recent %}
+                <tr>
+                    <td class="text-muted">{{ t.date.strftime('%b %d') }}</td>
+                    <td>{{ t.description or '—' }}</td>
+                    <td><span class="badge badge-category">{{ t.category }}</span></td>
+                    <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
+                        {{ '+' if t.type == 'income' else '-' }}{{ t.amount|money(t.currency) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No transactions this month</p>
+        <a href="/transactions" class="btn btn-primary btn-sm">Add Transaction</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

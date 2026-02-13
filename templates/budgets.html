@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title_extra %} — Budgets{% endblock %}
+{% block page_title %}Budgets{% endblock %}
+{% block page_actions %}
+<form method="get">
+    <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()">
+</form>
+{% endblock %}
+
+{% block content %}
+<div class="card section">
+    <div class="card-header"><h3>Set Budget</h3></div>
+    <div class="card-body">
+        <form method="post" action="/budgets/add">
+            <input type="hidden" name="month" value="{{ month }}">
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        {% for c in categories %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monthly Limit</label>
+                    <input type="number" name="amount" step="0.01" min="1" placeholder="500" required>
+                </div>
+                <div class="form-group-action">
+                    <button type="submit" class="btn btn-primary btn-full">Set Budget</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if budgets %}
+<div class="budget-grid">
+    {% for b in budgets %}
+    <div class="budget-card {{ 'over' if b.over }}">
+        <div class="budget-card-header">
+            <h4>{{ b.category }}</h4>
+            <a href="/budgets/delete/{{ b.id }}" class="delete-btn" title="Remove"
+               onclick="return confirm('Remove this budget?')"><i data-lucide="x"></i></a>
+        </div>
+        <div class="budget-amounts">
+            <span class="budget-spent {{ 'negative' if b.over }}">
+                ${{ "%.0f"|format(b.spent) }}
+            </span>
+            <span class="text-muted">of ${{ "%.0f"|format(b.limit) }}</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill {{ 'over' if b.over else ('warn' if b.pct > 75 else '') }}"
+                 style="width:{{ b.pct }}%"></div>
+        </div>
+        <div class="budget-footer">
+            {% if b.over %}
+                Over by ${{ "%.0f"|format(b.spent - b.limit) }}
+            {% else %}
+                ${{ "%.0f"|format(b.remaining) }} remaining
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if unbudgeted %}
+<div class="card">
+    <div class="card-header"><h3>Unbudgeted Spending</h3></div>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Category</th><th class="text-right">Spent</th></tr></thead>
+            <tbody>
+                {% for cat, amt in unbudgeted.items() %}
+                <tr>
+                    <td><span class="badge badge-category">{{ cat }}</span></td>
+                    <td class="text-right amount negative">${{ "%.2f"|format(amt) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not budgets and not unbudgeted %}
+<div class="card">
+    <div class="empty-state">
+        <p>No budgets set for this month</p>
+        <span class="text-muted">Set a budget above to start tracking</span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

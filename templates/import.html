@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title_extra %} — Import{% endblock %}
+{% block page_title %}Import Transactions{% endblock %}
+
+{% block content %}
+{% if not transactions %}
+<div class="grid-2 section">
+    <div class="card">
+        <div class="card-header"><h3>Paste SMS Messages</h3></div>
+        <div class="card-body">
+            <form method="post" action="/import/sms">
+                <div class="form-group">
+                    <label>UzCard / Humo SMS</label>
+                    <textarea name="sms_text" placeholder="Paste your bank SMS messages here..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Parse SMS</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Upload CSV</h3></div>
+        <div class="card-body">
+            <form method="post" action="/import/csv" enctype="multipart/form-data">
+                <label class="upload-area" for="csv-file">
+                    <i data-lucide="file-text" class="icon-lg"></i>
+                    <p class="font-semibold">Upload bank statement</p>
+                    <span class="text-muted">CSV format</span>
+                    <input type="file" name="csv_file" id="csv-file" accept=".csv"
+                           onchange="this.form.submit()">
+                </label>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ transactions|length }} transactions found</h3>
+    </div>
+    <form method="post" action="/import/confirm" class="import-preview">
+        <input type="hidden" name="count" value="{{ transactions|length }}">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Currency</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="select_{{ loop.index0 }}" value="1" checked class="check-input">
+                        </td>
+                        <td>
+                            <input type="date" name="date_{{ loop.index0 }}" value="{{ t.date or '' }}" class="input-sm">
+                        </td>
+                        <td>
+                            <input type="text" name="desc_{{ loop.index0 }}" value="{{ t.description or '' }}">
+                        </td>
+                        <td>
+                            <select name="type_{{ loop.index0 }}">
+                                <option value="expense" {{ 'selected' if t.type == 'expense' }}>Expense</option>
+                                <option value="income" {{ 'selected' if t.type == 'income' }}>Income</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="amount_{{ loop.index0 }}" value="{{ t.amount }}" step="0.01" class="input-sm">
+                        </td>
+                        <td>
+                            <select name="currency_{{ loop.index0 }}">
+                                <option value="UZS" {{ 'selected' if t.get('currency', 'UZS') == 'UZS' }}>UZS</option>
+                                <option value="USD" {{ 'selected' if t.get('currency', 'UZS') == 'USD' }}>USD</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select name="category_{{ loop.index0 }}">
+                                {% for c in categories %}
+                                <option value="{{ c }}" {{ 'selected' if c == t.category }}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer button-group">
+            <button type="submit" class="btn btn-primary">Import Selected</button>
+            <a href="/import" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}
