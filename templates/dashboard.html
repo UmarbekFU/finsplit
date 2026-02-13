@@ -9,9 +9,9 @@
 
 {% block content %}
 <div class="stats-grid-hero">
-    <div class="stat-card stat-card-{{ allowance.status }}">
+    <div class="hero-card {{ 'status-over' if allowance.status == 'over' else ('status-tight' if allowance.status == 'tight' else '') }}">
         <div class="stat-label">You can spend today</div>
-        <div class="stat-value-hero {{ 'positive' if allowance.status == 'comfortable' else ('negative' if allowance.status == 'over' else '') }}">
+        <div class="stat-value-hero">
             ${{ "%.2f"|format(allowance.daily_allowance) }}
         </div>
         <div class="stat-footer">{{ allowance.days_remaining }} days left this month</div>
@@ -35,27 +35,55 @@
     </div>
 </div>
 
-{% if budget_status %}
-<div class="card section">
-    <div class="card-header">
-        <h3>Budget Status</h3>
+<div class="grid-2 section">
+    {% if spending_by_cat %}
+    <div class="card">
+        <div class="card-header"><h3>Spending by Category</h3></div>
+        <div class="card-body chart-container">
+            <canvas id="spendingChart" class="chart-canvas"></canvas>
+        </div>
     </div>
-    <div class="card-body">
-        {% for b in budget_status %}
-        <div class="section">
-            <div class="flex-between">
-                <span class="font-semibold">{{ b.category }}</span>
-                <small class="text-muted">${{ "%.0f"|format(b.spent) }} / ${{ "%.0f"|format(b.limit) }}</small>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill {{ 'over' if b.over else ('warn' if b.pct > 75 else '') }}"
-                     style="width:{{ b.pct }}%"></div>
+    {% endif %}
+
+    <div>
+        {% if budget_status %}
+        <div class="card section">
+            <div class="card-header"><h3>Budget Status</h3></div>
+            <div class="card-body">
+                {% for b in budget_status %}
+                <div class="section">
+                    <div class="flex-between">
+                        <span class="font-semibold">{{ b.category }}</span>
+                        <small class="text-muted">${{ "%.0f"|format(b.spent) }} / ${{ "%.0f"|format(b.limit) }}</small>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill {{ 'over' if b.over else ('warn' if b.pct > 75 else '') }}"
+                             style="width:{{ b.pct }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
+        {% endif %}
+
+        {% if upcoming_bills %}
+        <div class="card">
+            <div class="card-header"><h3>Upcoming Bills</h3></div>
+            <div class="card-body">
+                {% for bill in upcoming_bills %}
+                <div class="bill-item">
+                    <span>
+                        <span class="bill-dot" style="background:{{ category_colors.get(bill.category, '#64748b') }}"></span>
+                        {{ bill.name }}
+                    </span>
+                    <span class="amount">{{ bill.amount|money(bill.currency) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
 
 <div class="card">
     <div class="card-header">
@@ -73,7 +101,12 @@
                 <tr>
                     <td class="text-muted">{{ t.date.strftime('%b %d') }}</td>
                     <td>{{ t.description or '—' }}</td>
-                    <td><span class="badge badge-category">{{ t.category }}</span></td>
+                    <td>
+                        <span class="badge badge-category"
+                              style="background:{{ category_bg_colors.get(t.category, '#f8fafc') }};color:{{ category_colors.get(t.category, '#64748b') }}">
+                            {{ t.category }}
+                        </span>
+                    </td>
                     <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
                         {{ '+' if t.type == 'income' else '-' }}{{ t.amount|money(t.currency) }}
                     </td>
@@ -89,4 +122,50 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if spending_by_cat %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+var ctx = document.getElementById('spendingChart').getContext('2d');
+var data = {{ spending_by_cat|tojson }};
+var catColors = {{ category_colors|tojson }};
+var labels = Object.keys(data);
+var colors = labels.map(function(k) { return catColors[k] || '#64748b'; });
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: labels,
+        datasets: [{
+            data: Object.values(data),
+            backgroundColor: colors,
+            borderWidth: 0,
+            hoverOffset: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                        var pct = (ctx.raw / total * 100).toFixed(1);
+                        return ' $' + ctx.raw.toFixed(2) + ' (' + pct + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+<script>lucide.createIcons();</script>
 {% endblock %}

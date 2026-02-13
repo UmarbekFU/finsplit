@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 db = SQLAlchemy()
 
@@ -7,9 +7,9 @@ db = SQLAlchemy()
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(10), nullable=False)          # 'income' or 'expense'
+    type = db.Column(db.String(10), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), nullable=False, default='USD')  # 'USD' or 'UZS'
+    currency = db.Column(db.String(3), nullable=False, default='USD')
     category = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(200), default='')
     date = db.Column(db.Date, nullable=False, default=date.today)
@@ -23,13 +23,45 @@ EXPENSE_CATEGORIES = [
 ]
 INCOME_CATEGORIES = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other']
 
+CATEGORY_COLORS = {
+    'Food': '#f97316',
+    'Transport': '#3b82f6',
+    'Housing': '#8b5cf6',
+    'Utilities': '#06b6d4',
+    'Entertainment': '#ec4899',
+    'Health': '#10b981',
+    'Shopping': '#f43f5e',
+    'Education': '#6366f1',
+    'Other': '#64748b',
+    'Salary': '#10b981',
+    'Freelance': '#8b5cf6',
+    'Investment': '#3b82f6',
+    'Gift': '#f97316',
+}
+
+CATEGORY_BG_COLORS = {
+    'Food': '#fff7ed',
+    'Transport': '#eff6ff',
+    'Housing': '#f5f3ff',
+    'Utilities': '#ecfeff',
+    'Entertainment': '#fdf2f8',
+    'Health': '#ecfdf5',
+    'Shopping': '#fff1f2',
+    'Education': '#eef2ff',
+    'Other': '#f8fafc',
+    'Salary': '#ecfdf5',
+    'Freelance': '#f5f3ff',
+    'Investment': '#eff6ff',
+    'Gift': '#fff7ed',
+}
+
 # ── Budgets ───────────────────────────────────────────────────
 
 class Budget(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     category = db.Column(db.String(50), nullable=False)
     monthly_limit = db.Column(db.Float, nullable=False)
-    month = db.Column(db.String(7), nullable=False)          # 'YYYY-MM'
+    month = db.Column(db.String(7), nullable=False)
 
     __table_args__ = (
         db.UniqueConstraint('category', 'month', name='uq_budget_cat_month'),
@@ -40,7 +72,7 @@ class Budget(db.Model):
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     members = db.relationship('GroupMember', backref='group', cascade='all, delete-orphan')
     expenses = db.relationship('SplitExpense', backref='group', cascade='all, delete-orphan')
 
@@ -73,7 +105,7 @@ class Investment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(20), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(20), nullable=False)          # 'stock', 'crypto', 'mutual_fund'
+    type = db.Column(db.String(20), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
     buy_price = db.Column(db.Float, nullable=False)
     current_price = db.Column(db.Float, nullable=False)
@@ -106,4 +138,23 @@ class Trip(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=True)
     notes = db.Column(db.String(500), default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+# ── Savings Goals ────────────────────────────────────────────
+
+class SavingsGoal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    target_amount = db.Column(db.Float, nullable=False)
+    current_amount = db.Column(db.Float, nullable=False, default=0)
+    currency = db.Column(db.String(3), nullable=False, default='USD')
+    deadline = db.Column(db.Date, nullable=True)
+    icon = db.Column(db.String(50), default='piggy-bank')
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+# ── App Settings ─────────────────────────────────────────────
+
+class AppSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(50), unique=True, nullable=False)
+    value = db.Column(db.String(200), nullable=False)

@@ -9,6 +9,7 @@
         <div class="card-header"><h3>Paste SMS Messages</h3></div>
         <div class="card-body">
             <form method="post" action="/import/sms">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label>UzCard / Humo SMS</label>
                     <textarea name="sms_text" placeholder="Paste your bank SMS messages here..."></textarea>
@@ -22,6 +23,7 @@
         <div class="card-header"><h3>Upload CSV</h3></div>
         <div class="card-body">
             <form method="post" action="/import/csv" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label class="upload-area" for="csv-file">
                     <i data-lucide="file-text" class="icon-lg"></i>
                     <p class="font-semibold">Upload bank statement</p>
@@ -40,6 +42,7 @@
         <h3>{{ transactions|length }} transactions found</h3>
     </div>
     <form method="post" action="/import/confirm" class="import-preview">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="count" value="{{ transactions|length }}">
         <div class="table-wrapper">
             <table>

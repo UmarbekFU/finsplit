@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title_extra %} — Savings Goals{% endblock %}
+{% block page_title %}Savings Goals{% endblock %}
+
+{% block content %}
+<div class="grid-2 section">
+    <div class="card">
+        <div class="card-header"><h3>New Goal</h3></div>
+        <div class="card-body">
+            <form method="post" action="/savings/add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Goal Name</label>
+                        <input type="text" name="name" placeholder="Emergency fund, New laptop..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Amount</label>
+                        <input type="number" name="target_amount" step="0.01" min="1" placeholder="5000" required>
+                    </div>
+                </div>
+                <div class="form-row cols-3">
+                    <div class="form-group">
+                        <label>Starting Amount</label>
+                        <input type="number" name="current_amount" step="0.01" min="0" value="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select name="currency">
+                            <option value="USD">$ USD</option>
+                            <option value="UZS">UZS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Deadline</label>
+                        <input type="date" name="deadline">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Icon</label>
+                    <select name="icon">
+                        <option value="piggy-bank">Piggy Bank</option>
+                        <option value="home">Home</option>
+                        <option value="car">Car</option>
+                        <option value="plane">Travel</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="graduation-cap">Education</option>
+                        <option value="heart">Health</option>
+                        <option value="shield">Emergency</option>
+                        <option value="gift">Gift</option>
+                        <option value="target">Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Create Goal</button>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        {% if goals %}
+        <div class="stat-card section">
+            <div class="stat-label">Total Saved</div>
+            <div class="stat-value">
+                ${{ "%.2f"|format(goals|sum(attribute='goal.current_amount')) }}
+            </div>
+            <div class="stat-footer">
+                across {{ goals|length }} goal{{ 's' if goals|length != 1 else '' }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if goals %}
+<div class="budget-grid">
+    {% for g in goals %}
+    <div class="budget-card">
+        <div class="budget-card-header">
+            <div class="flex-gap">
+                <div class="goal-icon">
+                    <i data-lucide="{{ g.goal.icon }}"></i>
+                </div>
+                <h4>{{ g.goal.name }}</h4>
+            </div>
+            <form method="post" action="/savings/delete/{{ g.goal.id }}" style="display:inline"
+                  onsubmit="return confirm('Delete this goal?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="delete-btn" title="Delete"><i data-lucide="x"></i></button>
+            </form>
+        </div>
+
+        <div class="budget-amounts">
+            <span class="budget-spent {{ 'positive' if g.pct >= 100 else '' }}">
+                ${{ "%.2f"|format(g.goal.current_amount) }}
+            </span>
+            <span class="text-muted">of ${{ "%.2f"|format(g.goal.target_amount) }}</span>
+        </div>
+
+        <div class="progress-bar progress-lg">
+            <div class="progress-fill" style="width:{{ g.pct }}%;background:var(--c-positive)"></div>
+        </div>
+
+        <div class="budget-footer">
+            {% if g.pct >= 100 %}
+                Goal reached!
+            {% else %}
+                ${{ "%.2f"|format(g.remaining) }} to go
+                {% if g.days_left is not none %}
+                    &middot; {{ g.days_left }} days left
+                    {% if g.daily_needed %}
+                        &middot; ${{ "%.2f"|format(g.daily_needed) }}/day
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if g.pct < 100 %}
+        <form method="post" action="/savings/fund/{{ g.goal.id }}" class="inline-form" style="margin-top:var(--s-3)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="number" name="amount" step="0.01" min="0.01" placeholder="Add funds" class="input-inline">
+            <button type="submit" class="btn btn-primary btn-sm">Fund</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>No savings goals yet</p>
+        <span class="text-muted">Create a goal to start saving</span>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

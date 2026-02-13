@@ -26,6 +26,7 @@
             <div class="card-header"><h3>New Group</h3></div>
             <div class="card-body">
                 <form method="post" action="/split/create_group">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label>Group Name</label>
                         <input type="text" name="name" placeholder="Trip, Roommates..." required>
@@ -47,6 +48,7 @@
             <div class="card-header">
                 <h3>{{ active_group.name }}</h3>
                 <form method="post" action="/split/{{ active_group.id }}/delete">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Delete this group?')">
                         <i data-lucide="trash-2"></i>
                     </button>
@@ -60,6 +62,7 @@
                 </div>
 
                 <form method="post" action="/split/{{ active_group.id }}/add_member" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="text" name="name" placeholder="Add member" class="input-inline">
                     <button type="submit" class="btn btn-outline btn-sm">Add</button>
                 </form>
@@ -71,6 +74,7 @@
             <div class="card-header"><h3>Add Expense</h3></div>
             <div class="card-body">
                 <form method="post" action="/split/{{ active_group.id }}/add_expense">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-row cols-3">
                         <div class="form-group">
                             <label>Description</label>
@@ -160,9 +164,12 @@
                             <td>{{ e.payer.name }}</td>
                             <td class="text-right amount">${{ "%.2f"|format(e.amount) }}</td>
                             <td>
-                                <a href="/split/{{ active_group.id }}/settle/{{ e.id }}" class="btn btn-ghost btn-sm">
-                                    {{ 'Undo' if e.settled else 'Settle' }}
-                                </a>
+                                <form method="post" action="/split/{{ active_group.id }}/settle/{{ e.id }}" style="display:inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-ghost btn-sm">
+                                        {{ 'Undo' if e.settled else 'Settle' }}
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}

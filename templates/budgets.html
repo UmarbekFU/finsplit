@@ -2,8 +2,13 @@
 {% block title_extra %} — Budgets{% endblock %}
 {% block page_title %}Budgets{% endblock %}
 {% block page_actions %}
-<form method="get">
+<form method="get" class="flex-gap">
     <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()">
+</form>
+<form method="post" action="/budgets/copy" class="flex-gap">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <button type="submit" class="btn btn-outline btn-sm">Copy Last Month</button>
 </form>
 {% endblock %}
 
@@ -12,6 +17,7 @@
     <div class="card-header"><h3>Set Budget</h3></div>
     <div class="card-body">
         <form method="post" action="/budgets/add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="month" value="{{ month }}">
             <div class="form-row cols-3">
                 <div class="form-group">
@@ -39,9 +45,15 @@
     {% for b in budgets %}
     <div class="budget-card {{ 'over' if b.over }}">
         <div class="budget-card-header">
-            <h4>{{ b.category }}</h4>
-            <a href="/budgets/delete/{{ b.id }}" class="delete-btn" title="Remove"
-               onclick="return confirm('Remove this budget?')"><i data-lucide="x"></i></a>
+            <h4>
+                <span class="bill-dot" style="background:{{ category_colors.get(b.category, '#64748b') }}"></span>
+                {{ b.category }}
+            </h4>
+            <form method="post" action="/budgets/delete/{{ b.id }}" style="display:inline"
+                  onsubmit="return confirm('Remove this budget?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="delete-btn" title="Remove"><i data-lucide="x"></i></button>
+            </form>
         </div>
         <div class="budget-amounts">
             <span class="budget-spent {{ 'negative' if b.over }}">
@@ -74,7 +86,12 @@
             <tbody>
                 {% for cat, amt in unbudgeted.items() %}
                 <tr>
-                    <td><span class="badge badge-category">{{ cat }}</span></td>
+                    <td>
+                        <span class="badge badge-category"
+                              style="background:{{ category_bg_colors.get(cat, '#f8fafc') }};color:{{ category_colors.get(cat, '#64748b') }}">
+                            {{ cat }}
+                        </span>
+                    </td>
                     <td class="text-right amount negative">${{ "%.2f"|format(amt) }}</td>
                 </tr>
                 {% endfor %}

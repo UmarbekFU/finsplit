@@ -1,5 +1,6 @@
 Flask==3.1.0
 Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
 SQLAlchemy==2.0.36
 pytesseract==0.3.13
 Pillow==11.3.0

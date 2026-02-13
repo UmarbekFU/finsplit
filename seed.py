@@ -1,6 +1,6 @@
 """Seed sample data for FinSplit demo."""
 from app import app, db
-from models import Transaction, Budget, Group, GroupMember, SplitExpense, SplitShare, Investment, FixedPayment, Trip
+from models import Transaction, Budget, Group, GroupMember, SplitExpense, SplitShare, Investment, FixedPayment, Trip, SavingsGoal, AppSettings
 from datetime import date, timedelta
 import random
 
@@ -130,6 +130,21 @@ def seed():
                 start_date=start, end_date=end, notes=notes
             ))
 
+        # ── Savings Goals ───────────────────────────────────
+        savings_goals = [
+            ('Emergency Fund', 10000, 3500, 'USD', today + timedelta(days=365), 'shield'),
+            ('New Laptop', 2000, 800, 'USD', today + timedelta(days=90), 'laptop'),
+            ('Vacation Fund', 3000, 1200, 'USD', today + timedelta(days=180), 'plane'),
+        ]
+        for name, target, current, currency, deadline, icon in savings_goals:
+            db.session.add(SavingsGoal(
+                name=name, target_amount=target, current_amount=current,
+                currency=currency, deadline=deadline, icon=icon
+            ))
+
+        # ── App Settings ───────────────────────────────────
+        db.session.add(AppSettings(key='uzs_usd_rate', value='12800'))
+
         db.session.commit()
         print('Seeded successfully!')
         print(f'  {len(transactions)} transactions')
@@ -138,6 +153,7 @@ def seed():
         print(f'  {len(investments)} investments')
         print(f'  {len(fixed_payments)} fixed payments')
         print(f'  {len(trips)} trips')
+        print(f'  {len(savings_goals)} savings goals')
 
 if __name__ == '__main__':
     seed()

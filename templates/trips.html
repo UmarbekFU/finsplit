@@ -7,6 +7,7 @@
     <div class="card-header"><h3>Plan a Trip</h3></div>
     <div class="card-body">
         <form method="post" action="/trips/add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-row cols-2">
                 <div class="form-group">
                     <label>Trip Name</label>
@@ -17,7 +18,14 @@
                     <input type="number" name="estimated_cost" step="0.01" min="1" placeholder="2000" required>
                 </div>
             </div>
-            <div class="form-row cols-2">
+            <div class="form-row cols-3">
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select name="currency">
+                        <option value="USD">$ USD</option>
+                        <option value="UZS">UZS</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Start Date</label>
                     <input type="date" name="start_date" required>
@@ -44,8 +52,11 @@
     <div class="budget-card {{ 'over' if v == 'over' }}">
         <div class="budget-card-header">
             <h4>{{ t.name }}</h4>
-            <a href="/trips/delete/{{ t.id }}" class="delete-btn" title="Delete"
-               onclick="return confirm('Delete this trip?')"><i data-lucide="x"></i></a>
+            <form method="post" action="/trips/delete/{{ t.id }}" style="display:inline"
+                  onsubmit="return confirm('Delete this trip?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="delete-btn" title="Delete"><i data-lucide="x"></i></button>
+            </form>
         </div>
 
         <div class="budget-amounts">

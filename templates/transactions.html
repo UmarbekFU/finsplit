@@ -2,6 +2,9 @@
 {% block title_extra %} — Transactions{% endblock %}
 {% block page_title %}Transactions{% endblock %}
 {% block page_actions %}
+<a href="/transactions/export?type={{ type_filter }}&category={{ cat_filter }}&from={{ date_from }}&to={{ date_to }}" class="btn btn-outline btn-sm">
+    <i data-lucide="download"></i> Export
+</a>
 <span class="amount header-stat {{ 'positive' if total >= 0 else 'negative' }}">
     Net: {{ '+' if total >= 0 else '' }}${{ "%.2f"|format(total) }}
 </span>
@@ -12,6 +15,7 @@
     <div class="card-header"><h3>Add Transaction</h3></div>
     <div class="card-body">
         <form method="post" action="/transactions/add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-row cols-3">
                 <div class="form-group">
                     <label>Type</label>
@@ -56,36 +60,52 @@
 </div>
 
 <div class="card section">
-    <details>
-        <summary class="filter-summary">Filter Transactions</summary>
-        <div class="filter-body">
-            <form method="get" class="form-row cols-3">
-                <div class="form-group">
-                    <select name="type">
-                        <option value="">All Types</option>
-                        <option value="income" {{ 'selected' if type_filter == 'income' }}>Income</option>
-                        <option value="expense" {{ 'selected' if type_filter == 'expense' }}>Expense</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select name="category">
-                        <option value="">All Categories</option>
-                        {% for c in expense_categories + income_categories %}
-                        <option value="{{ c }}" {{ 'selected' if cat_filter == c }}>{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-outline btn-full">Apply</button>
-                </div>
-            </form>
-        </div>
-    </details>
+    <div class="card-body">
+        <form method="get" class="form-row cols-4">
+            <div class="form-group">
+                <label>Search</label>
+                <input type="text" name="q" value="{{ search }}" placeholder="Search descriptions...">
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select name="type">
+                    <option value="">All Types</option>
+                    <option value="income" {{ 'selected' if type_filter == 'income' }}>Income</option>
+                    <option value="expense" {{ 'selected' if type_filter == 'expense' }}>Expense</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category">
+                    <option value="">All Categories</option>
+                    {% for c in expense_categories + income_categories %}
+                    <option value="{{ c }}" {{ 'selected' if cat_filter == c }}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group-action">
+                <button type="submit" class="btn btn-outline btn-full">Filter</button>
+            </div>
+        </form>
+        <form method="get" class="form-row cols-3" style="margin-top:0">
+            <div class="form-group">
+                <label>From</label>
+                <input type="date" name="from" value="{{ date_from }}">
+            </div>
+            <div class="form-group">
+                <label>To</label>
+                <input type="date" name="to" value="{{ date_to }}">
+            </div>
+            <div class="form-group-action">
+                <button type="submit" class="btn btn-outline btn-full">Apply Dates</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="card">
     <div class="card-header">
-        <h3>{{ transactions|length }} transactions</h3>
+        <h3>{% if pagination %}{{ pagination.total }}{% else %}{{ transactions|length }}{% endif %} transactions</h3>
     </div>
     {% if transactions %}
     <div class="table-wrapper">
@@ -105,7 +125,12 @@
                 <tr>
                     <td class="text-muted">{{ t.date.strftime('%Y-%m-%d') }}</td>
                     <td><span class="badge badge-{{ t.type }}">{{ t.type }}</span></td>
-                    <td><span class="badge badge-category">{{ t.category }}</span></td>
+                    <td>
+                        <span class="badge badge-category"
+                              style="background:{{ category_bg_colors.get(t.category, '#f8fafc') }};color:{{ category_colors.get(t.category, '#64748b') }}">
+                            {{ t.category }}
+                        </span>
+                    </td>
                     <td>{{ t.description or '—' }}</td>
                     <td class="text-right amount {{ 'positive' if t.type == 'income' else 'negative' }}">
                         {{ t.amount|money(t.currency) }}
@@ -114,14 +139,46 @@
                         <a href="/transactions/edit/{{ t.id }}" class="btn btn-ghost btn-sm" title="Edit">
                             <i data-lucide="pencil"></i>
                         </a>
-                        <a href="/transactions/delete/{{ t.id }}" class="delete-btn" title="Delete"
-                           onclick="return confirm('Delete this transaction?')"><i data-lucide="x"></i></a>
+                        <form method="post" action="/transactions/delete/{{ t.id }}" style="display:inline"
+                              onsubmit="return confirm('Delete this transaction?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="delete-btn" title="Delete"><i data-lucide="x"></i></button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+        <a href="?page={{ pagination.prev_num }}&type={{ type_filter }}&category={{ cat_filter }}&q={{ search }}&from={{ date_from }}&to={{ date_to }}">Prev</a>
+        {% else %}
+        <span class="disabled">Prev</span>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                {% if p == pagination.page %}
+                <span class="current">{{ p }}</span>
+                {% else %}
+                <a href="?page={{ p }}&type={{ type_filter }}&category={{ cat_filter }}&q={{ search }}&from={{ date_from }}&to={{ date_to }}">{{ p }}</a>
+                {% endif %}
+            {% else %}
+            <span class="disabled">&hellip;</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <a href="?page={{ pagination.next_num }}&type={{ type_filter }}&category={{ cat_filter }}&q={{ search }}&from={{ date_from }}&to={{ date_to }}">Next</a>
+        {% else %}
+        <span class="disabled">Next</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% else %}
     <div class="empty-state">
         <p>No transactions found</p>

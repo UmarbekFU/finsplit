@@ -6,39 +6,71 @@
     <title>FinSplit{% block title_extra %}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="app-layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
+                <span class="brand-dot"></span>
                 <h1>FinSplit</h1>
             </div>
             <nav class="sidebar-nav">
-                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a>
+                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
 
                 <div class="nav-section">Money</div>
-                <a href="/transactions" {% if '/transactions' in request.path %}class="active"{% endif %}>Transactions</a>
-                <a href="/budgets" {% if '/budgets' in request.path %}class="active"{% endif %}>Budgets</a>
-                <a href="/fixed-payments" {% if '/fixed-payments' in request.path %}class="active"{% endif %}>Fixed Payments</a>
-                <a href="/investments" {% if '/investments' in request.path %}class="active"{% endif %}>Investments</a>
+                <a href="/transactions" {% if '/transactions' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="arrow-left-right"></i> Transactions
+                </a>
+                <a href="/budgets" {% if '/budgets' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="pie-chart"></i> Budgets
+                </a>
+                <a href="/fixed-payments" {% if '/fixed-payments' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="calendar-check"></i> Fixed Payments
+                </a>
+                <a href="/investments" {% if '/investments' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="trending-up"></i> Investments
+                </a>
+                <a href="/savings" {% if '/savings' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="piggy-bank"></i> Savings
+                </a>
 
                 <div class="nav-section">Plan</div>
-                <a href="/trips" {% if '/trips' in request.path %}class="active"{% endif %}>Trips</a>
+                <a href="/trips" {% if '/trips' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="plane"></i> Trips
+                </a>
 
                 <div class="nav-section">Tools</div>
-                <a href="/scan" {% if '/scan' in request.path %}class="active"{% endif %}>Scan Receipt</a>
-                <a href="/import" {% if '/import' in request.path %}class="active"{% endif %}>Import</a>
-                <a href="/split" {% if '/split' in request.path %}class="active"{% endif %}>Split</a>
+                <a href="/scan" {% if '/scan' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="scan-line"></i> Scan Receipt
+                </a>
+                <a href="/import" {% if '/import' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="upload"></i> Import
+                </a>
+                <a href="/split" {% if '/split' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="split"></i> Split
+                </a>
+                <a href="/settings" {% if '/settings' in request.path %}class="active"{% endif %}>
+                    <i data-lucide="settings"></i> Settings
+                </a>
             </nav>
+            <div class="sidebar-footer">
+                <button class="theme-toggle" id="theme-toggle" type="button">
+                    <i data-lucide="moon" id="theme-icon-dark"></i>
+                    <i data-lucide="sun" id="theme-icon-light" style="display:none"></i>
+                    <span id="theme-label">Dark mode</span>
+                </button>
+            </div>
         </aside>
         <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
         <div class="main-content">
             <header class="page-header">
                 <div class="page-header-left">
-                    <button class="mobile-toggle" id="mobile-toggle">
+                    <button class="mobile-toggle" id="mobile-toggle" type="button">
                         <i data-lucide="menu"></i>
                     </button>
                     <h1>{% block page_title %}FinSplit{% endblock %}</h1>
@@ -77,6 +109,47 @@
         if (btn) btn.addEventListener('click', toggleSidebar);
         if (bd) bd.addEventListener('click', closeSidebar);
         sb.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeSidebar); });
+    })();
+    </script>
+    <script>
+    (function() {
+        var saved = localStorage.getItem('theme');
+        var html = document.documentElement;
+        var darkIcon = document.getElementById('theme-icon-dark');
+        var lightIcon = document.getElementById('theme-icon-light');
+        var label = document.getElementById('theme-label');
+
+        function setTheme(dark) {
+            html.setAttribute('data-theme', dark ? 'dark' : 'light');
+            localStorage.setItem('theme', dark ? 'dark' : 'light');
+            if (darkIcon && lightIcon && label) {
+                darkIcon.style.display = dark ? 'none' : '';
+                lightIcon.style.display = dark ? '' : 'none';
+                label.textContent = dark ? 'Light mode' : 'Dark mode';
+            }
+        }
+
+        if (saved === 'dark') setTheme(true);
+        else if (saved === 'light') setTheme(false);
+
+        var toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                setTheme(html.getAttribute('data-theme') !== 'dark');
+                lucide.createIcons();
+            });
+        }
+    })();
+    </script>
+    <script>
+    (function() {
+        var flashes = document.querySelectorAll('.flash');
+        flashes.forEach(function(el) {
+            setTimeout(function() {
+                el.classList.add('fade-out');
+                setTimeout(function() { el.remove(); }, 400);
+            }, 4000);
+        });
     })();
     </script>
     <script>

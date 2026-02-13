@@ -16,6 +16,7 @@
         <div class="card-header"><h3>Add Fixed Payment</h3></div>
         <div class="card-body">
             <form method="post" action="/fixed-payments/add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-row cols-2">
                     <div class="form-group">
                         <label>Name</label>
@@ -26,7 +27,20 @@
                         <input type="number" name="amount" step="0.01" min="0.01" placeholder="500.00" required>
                     </div>
                 </div>
-                <div class="form-row cols-3">
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select name="currency">
+                            <option value="USD">$ USD</option>
+                            <option value="UZS">UZS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Day of Month</label>
+                        <input type="number" name="day_of_month" min="1" max="31" placeholder="1">
+                    </div>
+                </div>
+                <div class="form-row cols-2">
                     <div class="form-group">
                         <label>Frequency</label>
                         <select name="frequency">
@@ -42,10 +56,6 @@
                             <option value="{{ c }}">{{ c }}</option>
                             {% endfor %}
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Day of Month</label>
-                        <input type="number" name="day_of_month" min="1" max="31" placeholder="1">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Add Payment</button>
@@ -83,18 +93,29 @@
                 {% endif %}
                 <tr class="{{ 'inactive' if not p.is_active }}">
                     <td><strong>{{ p.name }}</strong></td>
-                    <td><span class="badge badge-category">{{ p.category }}</span></td>
+                    <td>
+                        <span class="badge badge-category"
+                              style="background:{{ category_bg_colors.get(p.category, '#f8fafc') }};color:{{ category_colors.get(p.category, '#64748b') }}">
+                            {{ p.category }}
+                        </span>
+                    </td>
                     <td>{{ p.frequency|title }}{% if p.day_of_month %} (day {{ p.day_of_month }}){% endif %}</td>
-                    <td class="text-right amount">${{ "%.2f"|format(p.amount) }}</td>
+                    <td class="text-right amount">{{ p.amount|money(p.currency) }}</td>
                     <td class="text-right text-muted">${{ "%.2f"|format(monthly) }}/mo</td>
                     <td>
-                        <a href="/fixed-payments/toggle/{{ p.id }}" class="btn btn-ghost btn-sm">
-                            {{ 'Active' if p.is_active else 'Paused' }}
-                        </a>
+                        <form method="post" action="/fixed-payments/toggle/{{ p.id }}" style="display:inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-ghost btn-sm">
+                                {{ 'Active' if p.is_active else 'Paused' }}
+                            </button>
+                        </form>
                     </td>
                     <td>
-                        <a href="/fixed-payments/delete/{{ p.id }}" class="delete-btn" title="Delete"
-                           onclick="return confirm('Delete this payment?')"><i data-lucide="x"></i></a>
+                        <form method="post" action="/fixed-payments/delete/{{ p.id }}" style="display:inline"
+                              onsubmit="return confirm('Delete this payment?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="delete-btn" title="Delete"><i data-lucide="x"></i></button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

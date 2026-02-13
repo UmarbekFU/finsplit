@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title_extra %} — Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="card card-narrow">
+    <div class="card-header"><h3>Currency Settings</h3></div>
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>UZS to USD Exchange Rate</label>
+                <input type="number" name="uzs_usd_rate" step="1" min="1" value="{{ uzs_usd_rate }}" required>
+                <small class="text-muted" style="display:block;margin-top:var(--s-1)">
+                    1 USD = {{ "%.0f"|format(uzs_usd_rate) }} UZS
+                </small>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save Settings</button>
+        </form>
+    </div>
+</div>
+
+<div class="card card-narrow section" style="margin-top:var(--s-6)">
+    <div class="card-header"><h3>About</h3></div>
+    <div class="card-body">
+        <p class="text-muted">FinSplit — Personal finance manager with expense splitting, investment tracking, savings goals, trip planning, receipt scanning, and multi-currency support.</p>
+    </div>
+</div>
+{% endblock %}
