@@ -209,6 +209,15 @@ def dashboard():
                     'currency': fp.currency, 'day': due_day, 'category': fp.category,
                 })
 
+    # Daily spending trend for chart
+    days_in_month = monthrange(year, mo)[1]
+    daily_spending = [0.0] * days_in_month
+    for t in txns:
+        if t.type == 'expense':
+            day_idx = t.date.day - 1
+            if 0 <= day_idx < days_in_month:
+                daily_spending[day_idx] += to_usd(t.amount, t.currency)
+
     return render_template('dashboard.html',
         month=month, income=income, expenses=expenses,
         savings=savings, savings_rate=savings_rate,
@@ -216,6 +225,7 @@ def dashboard():
         spending_by_cat=dict(spending_by_cat),
         portfolio_value=portfolio_value, portfolio_gain=portfolio_gain,
         upcoming_bills=upcoming_bills, recent=txns[:8],
+        daily_spending=daily_spending,
     )
 
 

@@ -35,6 +35,17 @@
     </div>
 </div>
 
+<!-- Spending Trend -->
+<div class="card section">
+    <div class="card-header">
+        <h3>Spending Trend</h3>
+        <small class="text-muted">Daily spending this month</small>
+    </div>
+    <div class="trend-chart-container">
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
 <div class="grid-2 section">
     {% if spending_by_cat %}
     <div class="card">
@@ -117,7 +128,9 @@
     </div>
     {% else %}
     <div class="empty-state">
+        <i data-lucide="wallet"></i>
         <p>No transactions this month</p>
+        <span class="text-muted">Start tracking your spending</span>
         <a href="/transactions" class="btn btn-primary btn-sm">Add Transaction</a>
     </div>
     {% endif %}
@@ -125,8 +138,83 @@
 {% endblock %}
 
 {% block scripts %}
-{% if spending_by_cat %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+<!-- Spending Trend Chart -->
+<script>
+(function() {
+    var dailyData = {{ daily_spending|tojson }};
+    var labels = dailyData.map(function(_, i) { return i + 1; });
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(15,23,42,0.06)';
+    var textColor = isDark ? '#94a3b8' : '#94a3b8';
+
+    var ctx = document.getElementById('trendChart').getContext('2d');
+    var gradient = ctx.createLinearGradient(0, 0, 0, 180);
+    gradient.addColorStop(0, 'rgba(99,102,241,0.2)');
+    gradient.addColorStop(1, 'rgba(99,102,241,0.01)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: dailyData,
+                borderColor: '#6366f1',
+                backgroundColor: gradient,
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHitRadius: 12,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: '#6366f1',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e293b' : '#0f172a',
+                    titleFont: { size: 12, weight: '600' },
+                    bodyFont: { size: 13, weight: '700' },
+                    padding: 10,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(items) { return 'Day ' + items[0].label; },
+                        label: function(ctx) { return '$' + ctx.raw.toFixed(2); }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textColor, font: { size: 10 }, maxTicksLimit: 10 },
+                    border: { display: false }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    ticks: {
+                        color: textColor, font: { size: 10 }, maxTicksLimit: 5,
+                        callback: function(v) { return '$' + v; }
+                    },
+                    border: { display: false },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+})();
+</script>
+
+{% if spending_by_cat %}
+<!-- Category Doughnut Chart -->
 <script>
 var ctx = document.getElementById('spendingChart').getContext('2d');
 var data = {{ spending_by_cat|tojson }};
