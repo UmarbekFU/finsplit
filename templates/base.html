@@ -33,11 +33,12 @@
                 <a href="/split" {% if '/split' in request.path %}class="active"{% endif %}>Split</a>
             </nav>
         </aside>
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
         <div class="main-content">
             <header class="page-header">
                 <div class="page-header-left">
-                    <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <button class="mobile-toggle" id="mobile-toggle">
                         <i data-lucide="menu"></i>
                     </button>
                     <h1>{% block page_title %}FinSplit{% endblock %}</h1>
@@ -66,6 +67,18 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script>lucide.createIcons();</script>
     {% block scripts %}{% endblock %}
+    <script>
+    (function() {
+        var sb = document.getElementById('sidebar');
+        var bd = document.getElementById('sidebar-backdrop');
+        var btn = document.getElementById('mobile-toggle');
+        function toggleSidebar() { sb.classList.toggle('open'); }
+        function closeSidebar() { sb.classList.remove('open'); }
+        if (btn) btn.addEventListener('click', toggleSidebar);
+        if (bd) bd.addEventListener('click', closeSidebar);
+        sb.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeSidebar); });
+    })();
+    </script>
     <script>
     (function() {
         var tg = window.Telegram && window.Telegram.WebApp;
